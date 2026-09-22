@@ -2,6 +2,8 @@ const HttpError = require('../../../utils/httpError');
 
 const ALLOWED_FIELDS = ['title', 'completed'];
 
+const MIN_TITLE_LENGTH = 2;
+
 function validatePayloadShape(payload) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
     throw new HttpError(400, 'Body must be a JSON object.');
@@ -32,6 +34,10 @@ function normalizeTitleIfPresent(payload, normalized) {
   const trimmedTitle = payload.title.trim();
   if (!trimmedTitle) {
     throw new HttpError(400, '"title" cannot be empty.');
+  }
+
+  if(trimmedTitle.length < MIN_TITLE_LENGTH) {
+    throw new HttpError(400, `"title" must be at least ${MIN_TITLE_LENGTH} characters.`);
   }
 
   normalized.title = trimmedTitle;

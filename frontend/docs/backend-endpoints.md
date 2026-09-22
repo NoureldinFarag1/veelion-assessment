@@ -51,7 +51,7 @@ Create a task.
 
 ```ts
 type CreateTaskRequest = {
-  title: string; // required, trimmed, non-empty
+  title: string; // required, trimmed, at least 2 characters
   completed?: boolean; // default false
 };
 
@@ -64,6 +64,8 @@ Possible errors:
 - `400` when body is not an object.
 - `400` when title is missing/invalid/empty.
 - `400` when completed is not a boolean.
+- `400` when title is missing, invalid, empty, or shorter than 2 characters.
+- `400` when the body contains unsupported fields (listed in `error.details.unsupportedFields`).
 
 ### PATCH /tasks/:id
 
@@ -71,7 +73,7 @@ Update task title or status.
 
 ```ts
 type PatchTaskRequest = {
-  title?: string; // if provided, must be string and long enough after trim
+  title?: string; // if provided, trimmed, at least 2 characters
   completed?: boolean;
 };
 
@@ -84,6 +86,7 @@ Possible errors:
 - `400` when body is invalid.
 - `400` when no supported fields are provided.
 - `404` when task does not exist.
+- `400` when the body contains unsupported fields (listed in `error.details.unsupportedFields`).
 
 ### DELETE /tasks/:id
 
