@@ -10,7 +10,11 @@ async function readJsonArray(filePath) {
     }
 
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) {
+      throw new Error(`${filePath} does not contain a JSON array`);
+    }
+
+    return parsed;
   } catch (error) {
     if (error.code === 'ENOENT') {
       await fs.writeFile(filePath, '[]\n', 'utf-8');
