@@ -12,6 +12,8 @@ app.use(express.json());
 app.use('/tasks', tasksRouter);
 app.use('/activity', activityRouter);
 
+app.disable('x-powered-by');
+
 app.use((req, res, next) => {
   next(new HttpError(404, `Route not found: ${req.method} ${req.originalUrl}`));
 });
