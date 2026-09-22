@@ -139,7 +139,8 @@ Possible errors:
 ### GET /reports/tasks-summary
 
 Fetch summary statistics for tasks and activity.
-
+Query parameters:
+- `days` (optional, whole number from 1 to 365, default `7`): how far back to count activity for `recentActivityCount`, based on each entry's `when`.
 ```ts
 type TasksSummary = {
   total: number;
@@ -157,3 +158,6 @@ type GetTasksSummaryResponse = TasksSummary;
 Notes:
 - `in-progress` is currently returned as `0` because task data only includes boolean `completed`.
 - Response shape is raw object.
+
+Possible errors:
+- `400` when `days` is not a whole number between 1 and 365.
