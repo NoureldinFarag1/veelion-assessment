@@ -1,11 +1,11 @@
 const express = require('express');
-const asyncHandler = require('../../../middleware/asyncHandler');
 
-const c = require('../controllers/activity.controller');
+const asyncHandler = require('../../../middleware/asyncHandler');
+const activityController = require('../controllers/activity.controller');
 
 const activityRouter = express.Router();
 
-activityRouter.get('/', asyncHandler(c.get_activity));
-activityRouter.post('/', asyncHandler(c.get_activity));
+activityRouter.get('/', asyncHandler(activityController.listActivity));
+activityRouter.post('/', asyncHandler(activityController.createActivity));
 
 module.exports = activityRouter;
