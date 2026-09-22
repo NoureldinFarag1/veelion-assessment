@@ -1,7 +1,8 @@
+const { DATA_DIR } = require('../../../config');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const fp = path.join(process.cwd(), 'data', 'activity.json');
+const fp = path.join(DATA_DIR, 'activity.json');
 
 function loadDataA() {
   if (!fs.existsSync(fp)) {
