@@ -122,16 +122,17 @@ Create activity log entry.
 
 ```ts
 type CreateActivityRequest = {
-  action?: string;
+  action?: string; required, trimmed, non-empty
   info?: string;
 };
 
 type CreateActivityResponse = ActivityLog;
 ```
 
-Notes:
-- `action` and `info` are currently not validated by backend.
-- Response shape for activity endpoints is raw objects/arrays (not wrapped in `data`).
+Possible errors:
+- `400` when action is missing, empty, or not a string.
+- `400` when info is not a string.
+- `400` when the body contains unsupported fields.
 
 ## Reports Endpoints
 
