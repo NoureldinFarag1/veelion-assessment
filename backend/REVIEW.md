@@ -40,9 +40,10 @@ The Activity module is the exception. Honestly, its only strength is that it doe
 **What's wrong:** There are two problems here.
 
 1. Every write reads the whole file, waits, changes the array in memory, then writes the whole file back. When requests overlap, they all read the same old version and the last write wins, so the others disappear.
+
 2. Overlapping `fs.writeFile` calls on the same file aren't safe. Each one truncates the file and writes, and when they run at the same time their output can interleave. The result is a file that isn't valid JSON anymore. Because `readJsonArray` rethrows parse errors (see B2), every endpoint that touches that file then returns 500 until someone repairs it by hand.
 
-**Evidence:** I sent 6 `POST /tasks` requests at the same time. All 6 got `201 Created`, but only 3 were stored. The exact number changes from run to run, which is typical for a race.
+**Evidence:** `backend/scripts/concurrency-check.mjs` sends 20 concurrent `POST /tasks` requests. In one run all 20 returned `201` but only 3 were stored. In the next run the file ended up as invalid JSON, and every request after that returned 500 until the file was restored by hand. After the fix, six consecutive runs stored 20 of 20.
 
 **Why it matters:** At best it's silent data loss (the client is told the task was created and it's gone). At worst the whole data file is corrupted and the API stops working.
 
@@ -162,7 +163,7 @@ The status is right. The message exposes parser internals in a different style f
 
 **What's wrong:** It uses `readFileSync`, `writeFileSync`, and `existsSync`. While those run, Node can't handle any other request, including Tasks requests. The log only ever grows, so this gets slower over time.
 
-**The catch:** This is also exactly why Activity didn't lose data in the concurrency test. I sent 5 concurrent `POST /activity` requests and all 5 were stored, while Tasks lost half. A sync read, change, write runs without any gap for another request to slip into. Switching Activity to async the obvious way would introduce B1 into it.
+**The catch:** I sent 20 concurrent POST /activity requests and all 20 were stored, while Tasks lost 17 of 20.
 
 **Fix:** Build the write queue first (B1), then move Activity onto `jsonStore`. The order matters (see D4).
 
@@ -257,7 +258,9 @@ The controller rewrites `req.body` (`payload.title = payload.title.trim()`, `pay
 
 ### Q3. Dead fallback in `id.js` (Low)
 
-The `Date.now()` fallback only runs when `randomUUID` is missing, which means Node older than 14.17. That can't happen here: every file uses `node:` prefixed imports and `taskValidator.js` uses `Object.hasOwn`, which already require Node 16 or later. So the branch is unreachable, and it would produce weak IDs if it ever ran. Adding an `engines` field to `package.json` makes the real requirement explicit, and the fallback can go.
+The `Date.now()` fallback only runs when `randomUUID` is missing, which means Node older than 14.17. That can't happen here: every file uses `node:` prefixed imports and `taskValidator.js` uses `Object.hasOwn`, which already require Node 16 or later. So the branch is unreachable, and it would produce weak IDs if it ever ran. Adding an `engines` field makes the real requirement explicit, and the fallback can go.
+
+The declared minimum is Node 20.11, not 16. `Object.hasOwn` needs 16.9, but `backend/scripts/concurrency-check.mjs` uses `import.meta.dirname`, which landed in 20.11, so the engine range has to cover the scripts as well as the source.
 
 ### Q4. Reads have side effects (Low)
 
@@ -299,9 +302,8 @@ Activity is race safe today only because it's synchronous, and making it async w
 
 1. Add the write queue and atomic writes to `jsonStore` (B1, B3).
 2. Wrap the Activity routes in `asyncHandler` (M6).
-3. Move the Activity service onto `jsonStore` and `createId` (P1, M4, B8).
+3. Move the Activity service onto `jsonStore` and `createId`, and rename its identifiers in the same pass (P1, M4, B8, Q1).
 4. Add the Activity validator (B7).
-5. Rename (Q1).
 
 Doing step 3 before steps 1 and 2 would have fixed the performance problem by introducing data loss and a possible crash.
 
@@ -313,3 +315,26 @@ Doing step 3 before steps 1 and 2 would have fixed the performance problem by in
 * **Status mapping:** tasks only have a boolean `completed`, and the frontend only knows Completed and Pending. So `completed: true` counts as `done`, `completed: false` counts as `todo`, and `in-progress` is always `0`. The docs already describe it this way. Adding a real `status` field would mean a data migration and a value the UI can't set, so I've left it out.
 * **Recent activity:** the docs don't define "recent". I'm using the last 7 days by default, with an optional `?days=` query parameter. Adding an optional parameter doesn't break anyone. Filtering uses the `when` field. With the current seed data (all from April 2026) this returns `0`, which is correct, not a bug.
 * **Structure:** the Reports module reads through the existing Tasks and Activity services rather than opening the JSON files itself, so storage details stay in one place.
+
+## What I fixed, and what I found while fixing it
+
+Every commit message carries the IDs it addresses, so `git log` maps one to one onto this review.
+
+| Finding | Status |
+|---|---|
+| B1, B2, B3, B4, B5, B6, B7, B8, B9 | Fixed |
+| S1, S2, S3 | Fixed |
+| P1 | Fixed. P2 stays as a documented limit of the JSON files constraint |
+| M1, M2, M3, M4, M6, M8 | Fixed |
+| M5 | Not changed on purpose (D3) |
+| M7, M9 | Deferred, see the finding and Out of scope |
+| Q1, Q2, Q3, Q4 | Fixed |
+| Q5 | Deferred (see the finding) |
+
+Two things worth recording about the process:
+
+**A bug the refactor introduced and then caught.** After adding the Activity validator, every invalid body returned 500 instead of 400. The validator imported `utils/HttpError` with a capital H while everything else imported `utils/httpError`. macOS resolves both to the same file but Node loads them as two separate modules, so `error instanceof HttpError` was false in the error handler. On Linux this would have failed loudly at startup instead. Fixed by matching the casing.
+
+**One commit mixes findings.** B2 was committed on its own, then accidentally reverted while I was splitting B1 and B3 into their own commit, then restored in a later commit. The history shows all three steps. I left it as is rather than rewriting pushed history.
+
+Indentation is now pinned by a `.editorconfig` at the repo root, so new files match the existing 2-space style.
