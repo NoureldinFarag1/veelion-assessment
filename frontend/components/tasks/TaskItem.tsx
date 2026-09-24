@@ -1,4 +1,5 @@
 import type { Task } from "@/types/api";
+import { taskStatusLabel } from "@/lib/taskStatus";
 
 type TaskItemProps = {
   task: Task;
@@ -18,7 +19,8 @@ export function TaskItem({ task, busy, onToggle }: TaskItemProps) {
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: "0.8rem", alignItems: "start" }}>
         <p style={{ margin: 0, fontWeight: 600 }}>{task.title}</p>
-        <span className="badge">{task.completed ? "Completed" : "Pending"}</span>
+        <span className="badge">{taskStatusLabel(task)}</span>
+        <time dateTime={task.updatedAt}></time>
       </div>
 
       <small style={{ color: "var(--muted)" }}>

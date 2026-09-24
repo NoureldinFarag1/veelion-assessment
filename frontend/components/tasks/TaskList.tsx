@@ -3,15 +3,18 @@ import { TaskItem } from "@/components/tasks/TaskItem";
 
 type TaskListProps = {
   tasks: Task[];
+  hasAnyTasks: boolean;
   updatingTaskId: string;
   onToggle: (task: Task) => void;
 };
 
-export function TaskList({ tasks, updatingTaskId, onToggle }: TaskListProps) {
+export function TaskList({ tasks, hasAnyTasks,updatingTaskId, onToggle }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <section className="card" style={{ padding: "1rem" }}>
-        <p style={{ margin: 0, color: "var(--muted)" }}>No tasks match this filter.</p>
+        <p style={{ margin: 0, color: "var(--muted)" }}>
+          {hasAnyTasks ? "No tasks match this filter." : "No tasks yet."}
+        </p>
       </section>
     );
   }

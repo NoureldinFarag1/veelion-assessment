@@ -7,10 +7,12 @@ import { TaskList } from "@/components/tasks/TaskList";
 
 export function TaskDashboard() {
   const {
+    tasks,
     filteredTasks,
     filter,
     loading,
-    error,
+    loadError,
+    updateError,
     updatingTaskId,
     setFilter,
     fetchTasks,
@@ -35,17 +37,29 @@ export function TaskDashboard() {
         </section>
       ) : null}
 
-      {error ? (
+      {loadError ? (
         <section className="card" style={{ padding: "1rem", borderColor: "#e3b4c0", background: "#fff8fa" }}>
-          <p style={{ marginTop: 0, marginBottom: "0.75rem", color: "var(--danger)" }}>{error}</p>
+          <p style={{ marginTop: 0, marginBottom: "0.75rem", color: "var(--danger)" }}>{loadError}</p>
           <button type="button" className="button" onClick={fetchTasks}>
             Retry
           </button>
         </section>
       ) : null}
 
-      {!loading && !error ? (
-        <TaskList tasks={filteredTasks} updatingTaskId={updatingTaskId} onToggle={handleToggle} />
+      {/* A failed save keeps the list on screen. Only a failed load replaces it. */}
+      {updateError ? (
+        <section className="card" style={{ padding: "1rem", borderColor: "#e3b4c0", background: "#fff8fa" }}>
+          <p style={{ margin: 0, color: "var(--danger)" }}>{updateError}</p>
+        </section>
+      ) : null}
+
+      {!loading && !loadError ? (
+        <TaskList
+          tasks={filteredTasks}
+          hasAnyTasks={tasks.length > 0}
+          updatingTaskId={updatingTaskId}
+          onToggle={handleToggle}
+        />
       ) : null}
     </section>
   );
