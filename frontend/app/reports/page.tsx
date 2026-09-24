@@ -24,22 +24,22 @@ export default function ReportsPage() {
         </Link>
       </nav>
 
-      <header className="card" style={{ padding: "1rem" }}>
-        <h1 style={{ marginTop: 0, marginBottom: "0.5rem" }}>Reports</h1>
-        <p style={{ margin: 0, color: "var(--muted)" }}>
+      <header className="card">
+        <h1 className="page-title">Reports</h1>
+        <p className="muted">
           A summary of every task, plus how much activity was logged in the last 7 days.
         </p>
       </header>
 
       {loading ? (
-        <section className="card" style={{ padding: "1rem" }}>
+        <section className="card">
           <p style={{ margin: 0 }}>Loading report...</p>
         </section>
       ) : null}
 
       {error ? (
-        <section className="card" style={{ padding: "1rem", borderColor: "#e3b4c0", background: "#fff8fa" }}>
-          <p style={{ marginTop: 0, marginBottom: "0.75rem", color: "var(--danger)" }}>{error}</p>
+        <section className="card card-error">
+          <p>{error}</p>
           <button type="button" className="button" onClick={fetchSummary}>
             Retry
           </button>
@@ -48,19 +48,16 @@ export default function ReportsPage() {
 
       {!loading && !error && summary ? (
         <>
-          <section className="card" style={{ padding: "1rem" }} aria-label="Task totals">
-            <p style={{ margin: 0, color: "var(--muted)" }}>Total tasks</p>
-            <p style={{ margin: 0, fontSize: "2rem", fontWeight: 700 }}>{summary.total}</p>
+          <section className="card" aria-label="Task totals">
+            <p className="stat-label">Total tasks</p>
+            <p className="stat-value">{summary.total}</p>
           </section>
 
-          <section className="card" style={{ padding: "1rem" }} aria-label="Tasks by status">
-            <h2 style={{ marginTop: 0, marginBottom: "0.75rem", fontSize: "1.1rem" }}>By status</h2>
-            <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "grid", gap: "0.5rem" }}>
+          <section className="card" aria-label="Tasks by status">
+            <h2 className="section-title">By status</h2>
+            <ul className="list">
               {STATUS_ROWS.map((row) => (
-                <li
-                  key={row.key}
-                  style={{ display: "flex", justifyContent: "space-between", gap: "1rem" }}
-                >
+                <li key={row.key} className="list-row">
                   <span>{row.label}</span>
                   <span style={{ fontWeight: 600 }}>{summary.byStatus[row.key]}</span>
                 </li>
@@ -68,11 +65,9 @@ export default function ReportsPage() {
             </ul>
           </section>
 
-          <section className="card" style={{ padding: "1rem" }} aria-label="Recent activity">
-            <p style={{ margin: 0, color: "var(--muted)" }}>Activity in the last 7 days</p>
-            <p style={{ margin: 0, fontSize: "2rem", fontWeight: 700 }}>
-              {summary.recentActivityCount}
-            </p>
+          <section className="card" aria-label="Recent activity">
+            <p className="stat-label">Activity in the last 7 days</p>
+            <p className="stat-value">{summary.recentActivityCount}</p>
           </section>
         </>
       ) : null}
