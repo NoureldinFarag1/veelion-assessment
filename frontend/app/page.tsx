@@ -20,6 +20,11 @@ export default function HomePage() {
           <h2 style={{ marginTop: 0 }}>Activity Feed</h2>
 
         </Link>
+
+        <Link href="/reports" className="card" style={{ padding:"1rem", display:"block"}}>
+          <h2 style={{ marginTop: 0 }}>Reports</h2>
+
+        </Link>
       </section>
     </main>
   );
